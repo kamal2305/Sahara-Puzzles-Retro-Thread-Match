@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Sahara Puzzles: Retro Thread Matcher</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#c2652a",
+                        "secondary": "#78706a",
+                        "tertiary": "#8c3c3c",
+                        "background": "#faf5ee",
+                        "on-background": "#3a302a",
+                        "surface": "#faf5ee",
+                        "on-surface": "#3a302a",
+                        "outline-variant": "#d8d0c8",
+                        "primary-container": "#e08850",
+                        "tertiary-container": "#d47070",
+                        "surface-container": "#f2ece4",
+                        "surface-container-low": "#f6f0e8",
+                        "surface-container-high": "#ece6dc",
+                        "surface-container-highest": "#e6e0d6",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    "fontFamily": {
+                        "headline": ["EB Garamond", "serif"],
+                        "display": ["EB Garamond", "serif"],
+                        "body": ["Manrope", "sans-serif"],
+                        "label": ["Manrope", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body class="bg-background text-on-background font-body min-h-screen flex flex-col selection:bg-primary/20 transition-colors duration-500 overflow-x-hidden">
+
+    <!-- Top AppBar -->
+    <header class="bg-[#faf5ee]/90 dark:bg-stone-950/90 backdrop-blur-md border-b border-[#d8d0c8]/60 dark:border-stone-800 shadow-[0_2px_16px_rgba(58,48,42,0.04)] fixed top-0 w-full z-50">
+        <div class="flex justify-between items-center px-6 py-4 w-full max-w-7xl mx-auto">
+            <div class="flex items-center gap-4">
+                <button id="pause-btn" class="active:scale-95 transition-transform hover:text-tertiary text-stone-500">
+                    <span class="material-symbols-outlined">pause</span>
+                </button>
+                <div class="flex flex-col">
+                    <span id="current-level-label" class="font-headline text-2xl tracking-tight dark:text-stone-100 font-bold text-primary">Level 01</span>
+                    <span class="font-label text-[10px] uppercase tracking-[0.2em] text-stone-500">Project Spool</span>
+                </div>
+            </div>
+            <div class="absolute left-1/2 -translate-x-1/2 text-center hidden md:block">
+                <div class="font-display italic text-3xl text-primary">Sahara Puzzles</div>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex flex-col items-end">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="material-symbols-outlined text-sm">timer</span>
+                        <span id="game-timer" class="font-label font-bold text-lg tabular-nums">00:00</span>
+                    </div>
+                    <span id="game-score" class="font-label text-[10px] uppercase tracking-widest text-stone-500">Score: 0</span>
+                </div>
+                <div class="flex gap-2">
+                    <span class="material-symbols-outlined text-primary active:scale-95 transition-transform cursor-pointer">lightbulb</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow pt-24 pb-32 overflow-y-auto">
+        
+        <!-- Game View -->
+        <div id="view-game" class="view-container flex flex-col items-center justify-center px-4 animate-fade-in">
+            <div class="relative p-4 md:p-6 bg-surface-container-low dark:bg-stone-900 rounded-[32px] shadow-[0_4px_30px_rgba(58,48,42,0.06)] border border-outline-variant/30 dark:border-stone-800">
+                <div id="game-grid" class="w-full max-w-[500px] aspect-square gap-1.5 md:gap-3">
+                    <!-- Grid generated via game.js -->
+                </div>
+                
+                <div class="mt-6 flex justify-center gap-8 md:gap-12">
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="w-3 h-3 rounded-full bg-primary ring-4 ring-primary/10"></div>
+                        <span class="text-[10px] font-bold uppercase tracking-tighter text-stone-500">Active</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="w-3 h-3 rounded-full bg-tertiary/40"></div>
+                        <span class="text-[10px] font-bold uppercase tracking-tighter text-stone-500">Pending</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="w-3 h-3 rounded-full bg-secondary/30"></div>
+                        <span class="text-[10px] font-bold uppercase tracking-tighter text-stone-500">Empty</span>
+                    </div>
+                </div>
+            </div>
+            
+            <p id="game-instruction" class="mt-8 font-headline text-xl md:text-2xl text-on-surface dark:text-stone-300 italic max-w-md text-center px-4 leading-relaxed">
+                "Connect the matching spools to weave the desert tapestry."
+            </p>
+
+            <div class="mt-8 flex gap-4">
+                <button id="undo-btn" class="px-6 py-2.5 bg-surface-container-lowest dark:bg-stone-800 border border-outline-variant dark:border-stone-700 text-on-surface dark:text-stone-300 font-label font-bold uppercase tracking-widest text-[10px] rounded-full shadow-lg active:scale-95 transition-transform">
+                    Undo Move
+                </button>
+                <button id="shuffle-btn" class="px-6 py-2.5 bg-primary text-white font-label font-bold uppercase tracking-widest text-[10px] rounded-full shadow-lg active:scale-95 transition-transform">
+                    Shuffle Grid
+                </button>
+            </div>
+        </div>
+
+        <!-- Levels View -->
+        <div id="view-levels" class="view-container hidden px-6 animate-fade-in">
+            <div class="max-w-5xl mx-auto py-12">
+                <div class="text-center mb-16">
+                    <p class="font-label text-primary uppercase tracking-[0.2em] text-xs mb-3">Project Spool</p>
+                    <h2 class="font-display text-5xl text-on-background dark:text-stone-100">Choose Your Thread</h2>
+                    <div class="h-px w-24 bg-outline-variant/60 mx-auto mt-8"></div>
+                </div>
+                <div id="levels-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8">
+                    <!-- Levels generated via game.js -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard View -->
+        <div id="view-leaderboard" class="view-container hidden px-6 animate-fade-in">
+            <div class="max-w-screen-md mx-auto py-12">
+                <section class="text-center mb-16">
+                    <h1 class="font-display text-5xl text-on-surface dark:text-stone-100 mb-2">Top Weavers</h1>
+                    <p class="font-body text-secondary uppercase tracking-widest text-xs font-semibold">The Great Dune Rankings</p>
+                </section>
+                <section id="leaderboard-list" class="space-y-4">
+                    <!-- Leaderboard generated via game.js -->
+                </section>
+                <div class="mt-12 bg-on-surface dark:bg-stone-900 text-background dark:text-stone-300 p-6 rounded-2xl flex items-center justify-between shadow-2xl">
+                    <div class="flex items-center gap-6">
+                        <span class="font-headline text-2xl font-bold text-primary w-10">42</span>
+                        <div>
+                            <h4 class="font-headline text-lg font-medium">You</h4>
+                            <p class="text-[9px] font-label opacity-60 uppercase tracking-widest">Global Rank</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p id="user-total-score" class="font-headline text-xl font-bold text-primary">0</p>
+                        <p class="text-[9px] font-label opacity-60 uppercase tracking-widest">Total Points</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="view-settings" class="view-container hidden px-6 animate-fade-in">
+            <div class="max-w-xl mx-auto py-12">
+                <h1 class="font-display text-5xl text-on-surface dark:text-stone-100 mb-12">Settings</h1>
+                <div class="space-y-12">
+                    <section>
+                        <h2 class="font-display text-2xl text-primary mb-6 border-b border-outline-variant pb-2">Audio</h2>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex justify-between items-center">
+                                <label class="font-label text-xs uppercase tracking-widest">Sound Effects</label>
+                                <span id="sfx-vol-label" class="text-primary font-bold">65%</span>
+                            </div>
+                            <input id="sfx-vol-slider" class="w-full accent-primary" max="100" min="0" type="range" value="65"/>
+                        </div>
+                    </section>
+                    <section>
+                        <h2 class="font-display text-2xl text-primary mb-6 border-b border-outline-variant pb-2">Theme</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button id="theme-light" class="p-4 rounded-xl border-2 border-primary bg-white text-stone-900 font-bold uppercase text-[10px] tracking-widest">Light</button>
+                            <button id="theme-dark" class="p-4 rounded-xl border border-stone-800 bg-stone-900 text-stone-400 font-bold uppercase text-[10px] tracking-widest">Dark</button>
+                        </div>
+                    </section>
+                    <button id="reset-progress" class="w-full p-4 border border-tertiary/20 text-tertiary font-bold rounded-xl hover:bg-tertiary/5 transition-colors">
+                        Reset All Progress
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-safe bg-[#faf5ee]/95 dark:bg-stone-950/95 backdrop-blur-md border-t border-[#d8d0c8]/60 dark:border-stone-800 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-3xl">
+        <button data-view="game" class="nav-item flex flex-col items-center justify-center text-primary p-4 border-t-2 border-primary transition-all">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">extension</span>
+            <span class="font-label text-[10px] font-bold uppercase tracking-wider mt-1">Play</span>
+        </button>
+        <button data-view="levels" class="nav-item flex flex-col items-center justify-center text-stone-400 p-4 transition-all">
+            <span class="material-symbols-outlined">layers</span>
+            <span class="font-label text-[10px] font-bold uppercase tracking-wider mt-1">Levels</span>
+        </button>
+        <button data-view="leaderboard" class="nav-item flex flex-col items-center justify-center text-stone-400 p-4 transition-all">
+            <span class="material-symbols-outlined">military_tech</span>
+            <span class="font-label text-[10px] font-bold uppercase tracking-wider mt-1">Rank</span>
+        </button>
+        <button data-view="settings" class="nav-item flex flex-col items-center justify-center text-stone-400 p-4 transition-all">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="font-label text-[10px] font-bold uppercase tracking-wider mt-1">Settings</span>
+        </button>
+    </nav>
+
+    <!-- Core Game Script (Force Refresh) -->
+    <script src="game.js?v=2"></script>
+</body>
+</html>

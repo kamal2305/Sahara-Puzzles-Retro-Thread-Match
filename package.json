@@ -1,0 +1,12 @@
+{
+  "name": "sahara-puzzles",
+  "version": "1.0.0",
+  "description": "Sahara Puzzles: Retro Thread Matcher",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
